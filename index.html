@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Video Chat</title>
+</head>
+<body>
+    <h1>WebRTC Video Chat</h1>
+
+    <div id="local-video-container">
+        <video id="local-video" autoplay muted></video>
+    </div>
+
+    <div id="remote-video-container">
+        <video id="remote-video" autoplay></video>
+    </div>
+
+    <script>
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        let localStream;
+        let peerConnection;
+
+        // Function to get user media (camera and microphone)
+        async function getUserMedia() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = stream;
+                localStream = stream;
+            } catch (error) {
+                console.error('Error accessing camera and microphone:', error);
+            }
+        }
+
+        // Function to create and set up the peer connection
+        function createPeerConnection() {
+            const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            peerConnection = new RTCPeerConnection(configuration);
+
+            // Add the local stream to the peer connection
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            // Set up event handlers for the peer connection
+            peerConnection.onicecandidate = handleICECandidateEvent;
+            peerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
+            peerConnection.ontrack = handleTrackEvent;
+        }
+
+        // Function to handle ICE candidate events
+        function handleICECandidateEvent(event) {
+            if (event.candidate) {
+                // Send the ICE candidate to the other peer through the signaling server
+                // This involves a signaling mechanism, like WebSocket, to exchange candidate information
+            }
+        }
+
+        // Function to handle negotiation needed events
+        async function handleNegotiationNeededEvent() {
+            try {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                // Send the offer to the other peer through the signaling server
+                // This involves a signaling mechanism, like WebSocket, to exchange offer information
+            } catch (error) {
+                console.error('Error creating offer:', error);
+            }
+        }
+
+        // Function to handle incoming tracks
+        function handleTrackEvent(event) {
+            remoteVideo.srcObject = event.streams[0];
+        }
+
+        // Start the video chat
+        async function startVideoChat() {
+            await getUserMedia();
+            createPeerConnection();
+        }
+
+        // Call the function to start the video chat
+        startVideoChat();
+    </script>
+</body>
+</html>
